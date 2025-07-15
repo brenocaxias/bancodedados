@@ -1,4 +1,4 @@
-from interface.login import iniciar_login
+from bancodedaos.login_mysql import iniciar_login
 
 if __name__== "__main__":
     iniciar_login()

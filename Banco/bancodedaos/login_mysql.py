@@ -1,10 +1,11 @@
 # login_mysql.py
 import tkinter as tk
 from tkinter import messagebox
-from db_config import conectar_bd
+from bancodedaos import conectar_bd
+from login_sistema import login_sistema
 
 def abrir_login_sistema(conexao):
-    # Aqui você importaria e chamaria a próxima tela
+    login_sistema(conexao)
     messagebox.showinfo("Sucesso", "Conexão estabelecida com sucesso!")
     # Exemplo: login_sistema.abrir(conexao)
 

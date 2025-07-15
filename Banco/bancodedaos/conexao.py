@@ -1,14 +1,16 @@
 import mysql.connector
+from mysql.connector import Error
 
-def conectar_bd(usuario,senha):
+def conectar_bd(usuario,senha, host='localhost',database='Equipe521461'):
     try:
         conexao= mysql.connector.connect(
             host="localhost",
             user= usuario,
             password= senha,
-            database="Equipe12345"#trocarpelo matricula do pedro henrique
+            database= database
         )
-        return conexao
+        if conexao.is_connected():
+            return conexao
     except mysql.connector.Error as erro:
         print("Erro ao conectar ao MySql:",erro)
-        return None
+        return None 
