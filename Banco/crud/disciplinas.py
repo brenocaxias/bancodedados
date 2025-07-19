@@ -2,7 +2,59 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog
 
+def gerenciar_prerequisitos(conexao, disciplina_id, disciplina_nome):
+    janela_pr = tk.Toplevel()
+    janela_pr.title(f"Pré-requisitos - {disciplina_nome}")
+    janela_pr.geometry("600x400")
+
+    lista = tk.Listbox(janela_pr, width=70)
+    lista.pack(pady=10, fill="both", expand=True)
+
+    def carregar():
+        lista.delete(0, tk.END)
+        cursor = conexao.cursor()
+        cursor.execute("""
+            SELECT d2.id, d2.nome FROM pre_requisitos pr
+            JOIN disciplinas d1 ON d1.id = pr.disciplina_id
+            JOIN disciplinas d2 ON d2.id = pr.prerequisito_id
+            WHERE d1.id = %s
+        """, (disciplina_id,))
+        for id_, nome in cursor.fetchall():
+            lista.insert(tk.END, f"{id_} - {nome}")
+
+    def adicionar():
+        id_pr = simpledialog.askinteger("Adicionar Pré-requisito", "ID da disciplina que será pré-requisito:")
+        try:
+            cursor = conexao.cursor()
+            cursor.execute("INSERT INTO pre_requisitos (disciplina_id, prerequisito_id) VALUES (%s, %s)", (disciplina_id, id_pr))
+            conexao.commit()
+            carregar()
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao adicionar pré-requisito:\n{e}")
+
+    def remover():
+        selecionado = lista.get(tk.ACTIVE)
+        if not selecionado:
+            return
+        id_remover = selecionado.split(" - ")[0]
+        try:
+            cursor = conexao.cursor()
+            cursor.execute("DELETE FROM pre_requisitos WHERE disciplina_id = %s AND prerequisito_id = %s", (disciplina_id, id_remover))
+            conexao.commit()
+            carregar()
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao remover pré-requisito:\n{e}")
+
+    frame = tk.Frame(janela_pr)
+    frame.pack(pady=10)
+    tk.Button(frame, text="Adicionar", width=15, command=adicionar).pack(side="left", padx=5)
+    tk.Button(frame, text="Remover", width=15, command=remover).pack(side="left", padx=5)
+    tk.Button(frame, text="Fechar", width=15, command=janela_pr.destroy).pack(side="left", padx=5)
+
+    carregar()
+
 def abrir_crud_disciplinas(conexao):
+    
     def listar_disciplinas():
         for row in tree.get_children():
             tree.delete(row)
@@ -89,5 +141,15 @@ def abrir_crud_disciplinas(conexao):
     tk.Button(frame_botoes, text="Adicionar", width=15, command=adicionar_disciplina).pack(side="left", padx=5)
     tk.Button(frame_botoes, text="Excluir", width=15, command=excluir_disciplina).pack(side="left", padx=5)
     tk.Button(frame_botoes, text="Fechar", width=15, command=janela.destroy).pack(side="left", padx=5)
+
+    tk.Button(frame_botoes, text="Pré-requisitos", width=15, command=lambda: abrir_prerequisitos()).pack(side="left", padx=5)
+
+    def abrir_prerequisitos():
+        item = tree.focus()
+        if not item:
+            messagebox.showwarning("Atenção", "Selecione uma disciplina para gerenciar pré-requisitos.")
+            return
+        nome = tree.item(item)["values"][1]
+        gerenciar_prerequisitos(conexao, item, nome)
 
     listar_disciplinas()
